@@ -1,0 +1,58 @@
+# Eigenständige Variante: kein Build, kein „init-permissions“ und keine .env nötig (keine Variablen in dieser Datei).
+#   docker compose -f docker-compose.run.yml up -d
+# Die Datei kann allein, ohne den Rest des Projekts, auf den Server kopiert werden.
+#
+# Voraussetzung (einmalig, als root): Host-Ordner anlegen und dem Container-Benutzer (UID 10001) geben.
+#   sudo mkdir -p /DATA/AppData/dyndns-sync/{data,backups,logs}
+#   sudo chown -R 10001:10001 /DATA/AppData/dyndns-sync
+# Fehlt ein Ordner, bricht der Start mit einer Fehlermeldung ab, statt ihn als root anzulegen (create_host_path: false).
+# Das Image muss auf Docker Hub veröffentlicht sein: codxio/dyndns-sync:latest
+# Anpassungen (Port, Pfad, Zeitzone, Image, Secrets) direkt in dieser Datei vornehmen.
+# Nicht gleichzeitig mit den anderen docker-compose-Dateien verwenden (gleicher Container-/Projektname).
+name: dyndns-sync
+
+services:
+  dyndns-sync:
+    image: codxio/dyndns-sync:latest
+    pull_policy: always
+    container_name: DynDNS-Sync
+    restart: unless-stopped
+    init: true
+    pids_limit: 256
+    ports:
+      - "8080:8080"
+    environment:
+      TZ: Europe/Vienna
+      # true, sobald die Oberfläche ausschließlich über HTTPS erreichbar ist
+      COOKIE_SECURE: "false"
+      # Optional (zum Aktivieren Kommentarzeichen entfernen):
+      # SECRET_KEY: ""            # überschreibt das automatisch erzeugte Schlüsselfile in /data/secret.key
+      # SETUP_TOKEN: ""           # Token, das bei der Ersteinrichtung im Browser eingegeben werden muss
+      # INITIAL_ADMIN_USER: ""    # Admin beim ersten Start anlegen, sonst Einrichtung im Browser
+      # INITIAL_ADMIN_PASSWORD: ""
+      # SpeedTest (alle optional, Standardwerte genügen; siehe docs/SPEEDTEST.md):
+      # SPEEDTEST_INTERNAL_PORTS: ""      # zusätzliche Ports für den internen Test, z. B. "9000,9090"
+      # SPEEDTEST_INTERNAL_NETS: ""       # zusätzliche erlaubte Zielnetze (private Netze sind immer erlaubt)
+      # SPEEDTEST_INTERNAL_SECONDS: "8"
+    volumes:
+      - type: bind
+        source: /DATA/AppData/DynDNS-Sync/data
+        target: /data
+        bind: {create_host_path: false}
+      - type: bind
+        source: /DATA/AppData/DynDNS-Sync/backups
+        target: /backups
+        bind: {create_host_path: false}
+      - type: bind
+        source: /DATA/AppData/DynDNS-Sync/logs
+        target: /logs
+        bind: {create_host_path: false}
+    # Erlaubt dem unprivilegierten Container-Benutzer ICMP-Echo (Ping) für Latenz und Paketverlust im internen SpeedTest.
+    sysctls:
+      net.ipv4.ping_group_range: "0 2147483647"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
