@@ -110,7 +110,3 @@ Browser
 - Die externe Erreichbarkeitsprüfung erfolgt vom Anwendungsserver aus. NAT-Loopback oder lokale Firewall-Regeln können Ergebnisse beeinflussen.
 - Für ARM64-Systeme wie den Raspberry Pi 5 ist ein 64-Bit-Betriebssystem erforderlich, sofern das verwendete Image für `linux/arm64` veröffentlicht wurde.
 - Details zu Konfiguration, SpeedTest, Benachrichtigungen und Betrieb findest du in den Dokumentationsdateien des Projekts.
-
-## Lizenz
-
-Bitte beachte die im Repository enthaltene Lizenzdatei, sofern vorhanden.
